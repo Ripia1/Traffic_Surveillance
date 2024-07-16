@@ -8,6 +8,7 @@ import trafficlight
 import PIL.Image as Image
 import PIL.ImageDraw as ImageDraw
 import time
+#import pytesseract
 #from color_recognition_module import color_recognition_api
 
 #Load Yolov8 model
@@ -31,6 +32,9 @@ df_main = pd.DataFrame(columns=['frame_number', 'time', 'tracker_id', 'box'])
 df_object = pd.DataFrame(columns = ['tracker_id','object_class'])
 df_jaywalking = pd.DataFrame(columns=['tracker_id'])
 df_red_light_violation = pd.DataFrame(columns=['tracker_id'])
+
+start_time_seconds = 6 * 3600 + 17 * 60 + 50
+
 frame_num = 0
 
 # Read Frames
@@ -164,11 +168,14 @@ while ret:
                         
                         
             #if jay_status == 'Jaywalking' and 
-            
+             # Calculate the timestamp based on the frame number
+            timestamp = start_time_seconds + (frame_num / 10.0) # 10 frames per second
+            timestamp_formatted = time.strftime("%H:%M:%S", time.gmtime(timestamp))
+            print(f"Frame {frame_num + 1}: Timestamp {timestamp_formatted} seconds")
             
             new_row = {
                 'frame_number': frame_num,
-                'time': time.time(),
+                'time': timestamp,
                 'object_class': class_name,
                 'tracker_id': track_id,
                 #'box': (x.item(), y.item(), w.item(), h.item()),
@@ -178,8 +185,8 @@ while ret:
             }
             
             main_row = {'frame_number': frame_num,
-                           'time': time.time() , 
-                           'tracker_id': track_id,
+                           'time': timestamp, 
+                           'tracker_id': track_id
                            #'box': (x.item(), y.item(), w.item(), h.item())
             }
             
