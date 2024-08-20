@@ -8,6 +8,7 @@ import trafficlight
 import PIL.Image as Image
 import PIL.ImageDraw as ImageDraw
 import time
+import cordinate
 #import pytesseract
 #from color_recognition_module import color_recognition_api
 
@@ -51,7 +52,10 @@ while ret:
             crosswalk_left_roi = cv2.selectROI(frame) #left crosswalk
             crosswalk_right_roi = cv2.selectROI(frame) #right crosswalk
             
+            
             first_frame = False 
+        
+        
         
         traffic_signal = trafficlight.traffic_light_status(frame,traffic_signal_roi)
         
@@ -82,7 +86,9 @@ while ret:
         ye2 = int(crosswalk_right_roi[1]+ crosswalk_right_roi[3])
         xe1 = int(crosswalk_right_roi[0])
         xe2 = int(crosswalk_right_roi[0]+ crosswalk_right_roi[2])            
-            
+        
+        
+        print(yb1, yb2, xb1, xb2)    
    
         
         #Detect objects
@@ -92,19 +98,32 @@ while ret:
         #Plot results
         frame_ = results[0].plot()
 
-
+        # # Get the boxes and track IDs
+        # boxes = results[0].boxes.xywh.cpu()
+        # trackid =  results[0].boxes.id
+        # if trackid is not None:
+        #     track_ids = trackid.int().cpu.tolist()
+        # class_names = results[0].names
+        # classid = results[0].boxes.cls.cpu()
+        
+        
+        
         # Get the boxes and track IDs
         boxes = results[0].boxes.xywh.cpu()
         if results[0].boxes.id is not None:
             track_ids = results[0].boxes.id.int().cpu().tolist()
         class_names = results[0].names
         classid = results[0].boxes.cls.cpu()
+        
+        
 
         # Run a for loop for each detected object with their tracking id, bounding box, and object class information
         for box, track_id, classes in zip(boxes, track_ids, classid):
             x, y, w, h = box
             track = track_history[track_id]
             class_name = class_names[int (classes)]
+            
+            print (track_id, class_name, x, y)
 
             #Iniatilize Jaywalking
             jay_status = "NA"
@@ -168,17 +187,18 @@ while ret:
                         
                         
             #if jay_status == 'Jaywalking' and 
-             # Calculate the timestamp based on the frame number
+            # Calculate the timestamp based on the frame number
             timestamp = start_time_seconds + (frame_num / 10.0) # 10 frames per second
             timestamp_formatted = time.strftime("%H:%M:%S", time.gmtime(timestamp))
             print(f"Frame {frame_num + 1}: Timestamp {timestamp_formatted} seconds")
             
-            new_row = {
+            traffic_surviellance = {
                 'frame_number': frame_num,
                 'time': timestamp,
                 'object_class': class_name,
                 'tracker_id': track_id,
-                #'box': (x.item(), y.item(), w.item(), h.item()),
+                'box_x': f"{x}",
+                'box_y': f"{y}",
                 'traffic_signal': traffic_signal,
                 'jaywalking': jay_status,
                 'violation': violation
@@ -186,8 +206,8 @@ while ret:
             
             main_row = {'frame_number': frame_num,
                            'time': timestamp, 
-                           'tracker_id': track_id
-                           #'box': (x.item(), y.item(), w.item(), h.item())
+                           'tracker_id': track_id,
+                           'box': f"{x}, {y}"
             }
             
             object = {
@@ -208,7 +228,7 @@ while ret:
             }
             
             # Append the new row to the DataFrame
-            df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+            df = pd.concat([df, pd.DataFrame([traffic_surviellance])], ignore_index=True)
          
             df_main = pd.concat([df_main, pd.DataFrame([main_row])], ignore_index=True)
             
@@ -257,8 +277,8 @@ db_name = 'Traffic_Data'
 engine = create_engine(f"mysql+mysqlconnector://{db_user}:{db_password}@{db_host}/{db_name}")
 
 # Store DataFrame in MySQL database
-table_name = 'Traffic_Surviellance'
-df.to_sql(table_name, con=engine, if_exists='replace', index=False)
+table_name_traffic_surviellance = 'Traffic_Surviellance'
+df.to_sql(table_name_traffic_surviellance, con=engine, if_exists='replace', index=False)
 
 # Store second DataFrame (main) in MySQL database
 table_name_main = 'Main'
@@ -270,14 +290,14 @@ df_object.to_sql(table_name_object, con=engine, if_exists='replace', index=False
 
 #Store fourth DataFrame (jaywalking) in MySQL database
 table_name_jaywalking = 'Jaywalking'
-df_jaywalking.sql(table_name_jaywalking, con=engine, if_exists='replace', index=False)
+df_jaywalking.to_sql(table_name_jaywalking, con=engine, if_exists='replace', index=False)
 
 #Store fifth DataFrame (red_light_violation) in MySQL database
 table_name_red_light_violation ='Red Light Violation'
-df_red_light_violation.sql(table_name_red_light_violation, con=engine, if_exists='replace', index = False)
+df_red_light_violation.to_sql(table_name_red_light_violation, con=engine, if_exists='replace', index = False)
 
 # Confirm data insertion
-print(f"\nDataFrame stored in MySQL table '{table_name}' successfully.")
+print(f"\nDataFrame stored in MySQL table '{table_name_traffic_surviellance}' successfully.")
 print(f"Main DataFrame stored in MySQL table '{table_name_main}' successfully.")
 print(f"Object DataFrame stored in MySQL table '{table_name_object}' successfully.")
 print(f"Jaywalking DataFrame stored in MySQL table '{table_name_jaywalking}' successfully.")
