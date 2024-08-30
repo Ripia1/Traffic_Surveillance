@@ -59,13 +59,7 @@ while ret:
         
         traffic_signal = trafficlight.traffic_light_status(frame,traffic_signal_roi)
         
-        # y1_2 = int(crosswalk_bottom_roi[1])
-        # y2_2 = int(crosswalk_bottom_roi[1] +  crosswalk_bottom_roi[3])
-        # x1_1 = int(crosswalk_bottom_roi[0])
-        # x2_2 = int(crosswalk_bottom_roi[0] + crosswalk_bottom_roi[2])
-        
-        
-        
+               
         #crossing coord bottom
         yb1 = int(crosswalk_bottom_roi[1])
         yb2 = int(crosswalk_bottom_roi[1]+ crosswalk_bottom_roi[3])
@@ -97,14 +91,6 @@ while ret:
 
         #Plot results
         frame_ = results[0].plot()
-
-        # # Get the boxes and track IDs
-        # boxes = results[0].boxes.xywh.cpu()
-        # trackid =  results[0].boxes.id
-        # if trackid is not None:
-        #     track_ids = trackid.int().cpu.tolist()
-        # class_names = results[0].names
-        # classid = results[0].boxes.cls.cpu()
         
         
         
@@ -216,15 +202,15 @@ while ret:
             }
             
             jaywalking = {
-                'tracker_id': track_id
-            #     'start_frame': 
-            #     'end_frame': 
+                'tracker_id': track_id,
+                'frame_number': frame_num,
+                'jaywalking': jay_status
              }
             
             red_light_violation = {
-                 'tracker_id': track_id
-            #     'start_frame': 
-            #     'end_frame': 
+                 'tracker_id': track_id,
+                'frame_number': frame_num,
+                'violation': violation 
             }
             
             # Append the new row to the DataFrame
